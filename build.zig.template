@@ -14,6 +14,9 @@ pub fn build(b: *std.Build) void {
 		.optimize = optimize,
 	});
 
+	const efi = b.dependency("efi", .{});
+	exe.root_module.addImport("efi", efi.module("efi"));
+
 	const target_output = b.addInstallArtifact(exe, .{
 		.dest_dir = .{
 			.override = .{
