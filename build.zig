@@ -14,11 +14,28 @@ pub fn build(b: *std.Build) !void {
 		.optimize = optimize,
 	});
 	
+	const docs_step = b.step("docs", "Generate docs.");
+	const docs_obj = b.addObject(.{
+		.name = "efi",
+		.root_source_file = b.path("src/main.zig"),
+		.target = b.resolveTargetQuery(target),
+		.optimize = optimize,
+	});
+	const install_docs = b.addInstallDirectory(.{
+		.source_dir = docs_obj.getEmittedDocs(),
+		.install_dir = .prefix,
+		.install_subdir = "docs",
+	});
+	docs_step.dependOn(&install_docs.step);
+
 	inline for ([_]struct {
 		name: []const u8,
 		src: []const u8,
 	} {
 		.{ .name = "hello", .src = "examples/hello/main.zig" },
+		.{ .name = "heap", .src = "examples/heap/main.zig" },
+		.{ .name = "graphics", .src = "examples/graphics/main.zig" },
+		.{ .name = "advanced", .src = "examples/advanced/main.zig" },
 	}) |excfg| {
 		const ex_name = excfg.name;
 		const ex_src = excfg.src;
