@@ -24,6 +24,7 @@ make docker
 ## Highlighted features
 * Never have to call EFI functions manually
 * Heap management
+* Optional panic handler that enables partial debugging (depending on how far along the OS setup is)
 * Graphics
 	* Text rendering
 	* 2D graphics (can make games)
@@ -35,12 +36,13 @@ make docker
 * Hardware RNG
 	* Fallbacks to software RNG if hardware RNG fails
 
-## Examples
-* **[AeroOS](https://github.com/LandStander27/AeroOS)**: OS I created that originally gave me the idea for this project. Most of the code of this library is taken from here.
+## Examples (Ordered by least-most difficult)
 * [Hello World](examples/hello): Quick "Hello World" example.
 * [Heap](examples/heap): Simple heap example.
+* [Panic](examples/panic): Showcases how to use the optional panic handler.
 * [Graphics](examples/graphics): Text and 2D graphics.
 * [Advanced](examples/advanced): Skeleton for an "advanced" project.
+* **[AeroOS](https://github.com/LandStander27/AeroOS)**: Simple OS I created that originally gave me the idea for this project. Most of the code of this library is taken from here.
 
 ## FAQ
 * When building with docker, why are the error messages not pretty?:
