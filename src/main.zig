@@ -1,5 +1,6 @@
 
 // Imports
+pub const panic = @import("panic.zig");
 pub const time = @import("time.zig");
 pub const rng = @import("rand.zig");
 pub const log = @import("log.zig");

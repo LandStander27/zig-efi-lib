@@ -1,6 +1,6 @@
 const efi = @import("efi");
 
-const panic = @import("panic.zig");
+pub const panic = efi.panic.panic_handler;
 const log = efi.log;
 
 fn entry() !Request {
@@ -42,7 +42,7 @@ fn entry() !Request {
 	try efi.fs.mount_root();
 	defer {
 		efi.fs.umount_root() catch |e| {
-			panic.kernel_panic("On root umount: {any}", .{e});
+			efi.panic.kernel_panic("On root umount: {any}", .{e});
 		};
 	}
 	

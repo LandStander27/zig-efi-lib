@@ -18,7 +18,7 @@ setup:
 	mmd -i bin/EFI/BOOT/boot.img ::files
 	# echo "Hello World!" > bin/files/test.txt
 	# mcopy -i bin/EFI/BOOT/boot.img bin/files/test.txt ::files
-	mcopy -o -s -i bin/EFI/BOOT/boot.img root/* ::
+	if [ -d "root" ]; then mcopy -o -s -i bin/EFI/BOOT/boot.img root/* ::; fi
 
 docker:
 	docker build -t osbuilder .
