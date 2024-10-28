@@ -13,19 +13,13 @@ pub const Allocator = struct {
 
 	// amount: usize = 0,
 
+	/// Return an `Allocator`.
 	pub fn init() Allocator {
 		return Allocator{};
 	}
 
+	/// Allocate a buffer `count` of `T`.
 	pub fn alloc(self: *const Allocator, comptime T: type, count: usize) ![]T {
-		// if (count == 0) return &[0]T{};
-		// var memory: [*]align(8) T = undefined;
-		// const res = (try bs.init()).allocatePool(uefi.tables.MemoryType.BootServicesData, count * @sizeOf(T), @ptrCast(&memory));
-		// if (res != uefi.Status.Success) {
-		// 	try res.err();
-		// }
-		// amount += 1;
-		// return memory[0..count];
 		return self.alloc_type(T, count, uefi.tables.MemoryType.BootServicesData);
 	}
 
@@ -52,6 +46,7 @@ pub const Allocator = struct {
 	// 	amount += 1;
 	// }
 
+	/// Reallocates a buffer `new_count` of `T`, containing original elements of `old_memory`.
 	pub fn realloc(self: *const Allocator, comptime T: type, old_memory: []T, new_count: usize) ![]T {
 		const new_memory: []T = try self.alloc(T, new_count);
 		const size = blk: {
@@ -65,6 +60,7 @@ pub const Allocator = struct {
 		return new_memory;
 	}
 
+	/// Deallocates `memory`.
 	pub fn free(_: *const Allocator, memory: anytype) void {
 		const res = (bs.init() catch {
 			@panic("Cannot free without boot services");
@@ -84,6 +80,7 @@ pub const Allocator = struct {
 		amount -= 1;
 	}
 
+	/// Allocate one `T`.
 	pub fn create(self: *const Allocator, comptime T: type) !T {
 		const data: []u8 = try self.alloc(u8, @sizeOf(T));
 		const ptr: *T = @ptrCast(data.ptr);
@@ -108,6 +105,8 @@ pub const Allocator = struct {
 	// 	try self.alloc_addr(T, addr, 1);
 	// }
 
+	/// Deallocate `ptr`.
+	/// `ptr` must have been allocated from `self.create`.
 	pub fn destroy(self: *const Allocator, ptr: anytype) void {
 		const data: [*]const u8 = @ptrCast(ptr);
 		self.free(data[0..@sizeOf(@TypeOf(ptr.*))]);

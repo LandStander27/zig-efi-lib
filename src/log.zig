@@ -6,6 +6,8 @@ const sleepms = @import("time.zig").sleepms;
 
 const nums: [2]u64 = .{ 75, 175 };
 
+/// Logs a new task has started.
+/// Recommended to call either `finish_task`, `error_task`, or `error_task_msg` after.
 pub fn new_task(str: []const u8) void {
 	if (graphics.has_inited()) {
 		fb.set_color(fb.Orange);
@@ -24,13 +26,6 @@ pub fn new_task(str: []const u8) void {
 		// io.right(-7);
 	}
 	var delay: u64 = (nums[0]+nums[1])/2;
-	// if (rng.has_inited()) blk: {
-	// 	if (rng.random(0, 10) catch break :blk > 8) {
-	// 		delay = rng.random(nums[0]*3, nums[1]*3) catch (nums[0]+nums[1])/2;
-	// 	} else {
-	// 		delay = rng.random(nums[0], nums[1]) catch (nums[0]+nums[1])/2;
-	// 	}
-	// }
 	blk: {
 		if (rng.random(0, 10) catch break :blk > 8) {
 			delay = rng.random(nums[0]*3, nums[1]*3) catch (nums[0]+nums[1])/2;
@@ -41,6 +36,7 @@ pub fn new_task(str: []const u8) void {
 	sleepms(delay) catch {};
 }
 
+/// Logs that a task has finished.
 pub fn finish_task() void {
 	if (graphics.has_inited()) {
 		fb.set_color(fb.Green);
@@ -50,13 +46,9 @@ pub fn finish_task() void {
 		// io.println("Success   ", .{}) catch {};
 		io.puts("Success   \n");
 	}
-	// var delay: u64 = (nums[0]+nums[1])/2;
-	// if (rng.has_inited()) {
-	// 	delay = rng.random(nums[0], nums[1]) catch (nums[0]+nums[1])/2;
-	// }
-	// sleepms(delay) catch {};
 }
 
+/// Logs that a task has errored.
 pub fn error_task() void {
 	if (graphics.has_inited()) {
 		fb.set_color(fb.Red);
@@ -68,6 +60,7 @@ pub fn error_task() void {
 	}
 }
 
+/// Logs that a task has errored, while providing a reason/message.
 pub fn error_task_msg(comptime format: []const u8, args: anytype) void {
 	if (graphics.has_inited()) {
 		fb.set_color(fb.Red);

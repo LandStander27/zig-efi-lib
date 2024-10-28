@@ -76,12 +76,12 @@ pub fn main() void {
 
 	efi.io.puts("Reached target entry\n");
 	const req = entry() catch |e| {
-		panic.kernel_panic("On entry: {any}", .{e});
+		efi.panic.kernel_panic("On entry: {any}", .{e});
 	};
 
 	if (efi.heap.amount != 0) {
 		const msg = if (efi.heap.amount > 1) "Detected memory leaks" else "Detected memory leak";
-		panic.kernel_panic_raw(msg);
+		efi.panic.kernel_panic_raw(msg);
 	}
 
 	switch (req) {

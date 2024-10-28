@@ -8,6 +8,8 @@ const fb = @import("fb.zig");
 
 var network: ?*uefi.protocol.SimpleNetwork = null;
 
+/// Initializes the `SimpleNetwork` protocol.
+/// This protocol has no uses yet.
 pub fn init() !void {
 	const boot_services = try bs.init();
 
@@ -27,5 +29,4 @@ pub fn init() !void {
 	}
 
 	log.finish_task();
-
 }

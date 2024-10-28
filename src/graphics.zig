@@ -25,34 +25,41 @@ pub const Color = struct {
 	g: u32,
 	b: u32,
 
+	/// Converts contained color into a single `u32`.
 	pub fn to_raw(self: *const Color) u32 {
 		return (self.r << 16) + (self.g << 8) + self.b;
 	}
 
+	/// Converts a single `u32` to a `Color`.
 	pub fn from_raw(raw: u32) Color {
 		return Color{ .r = raw >> 16, .g = (raw >> 8) & 0xFF, .b = raw & 0xFF };
 	}
 
+	/// Converts contained color into a `uefi.protocol.GraphicsOutput.BltPixel`.
 	pub fn to_gop(self: *const Color) uefi.protocol.GraphicsOutput.BltPixel {
 		return uefi.protocol.GraphicsOutput.BltPixel{ .red = @intCast(self.r), .green = @intCast(self.g), .blue = @intCast(self.b) };
 	}
 
 };
 
+/// Returns the current resolution.
 pub fn current_resolution() VideoMode {
 	return VideoMode{ ._index = 0, .width = gop.?.mode.info.horizontal_resolution, .height = gop.?.mode.info.vertical_resolution };
 }
 
+/// Set the resolution to use.
 pub fn set_videomode(mode: VideoMode) !void {
 	if (gop.?.setMode(mode._index) != uefi.Status.Success) {
 		return error.CouldNotSetMode;
 	}
 }
 
+/// Tests if `graphics.init()` has been called.
 pub fn has_inited() bool {
 	return inited;
 }
 
+/// Initializes the `GraphicsOutput` protocol.
 pub fn init() !void {
 	const boot_services = try bs.init();
 	log.new_task("GraphicsOutput");
@@ -70,6 +77,8 @@ pub fn init() !void {
 	fb_base = @ptrFromInt(gop.?.mode.frame_buffer_base);
 }
 
+/// Draw a pixel at (`x`, `y`) with color of `color`.
+/// If (`x`, `y`) is off the screen, nothing happens.
 pub fn draw_pixel(x: u64, y: u64, color: Color) void {
 	if (x >= gop.?.mode.info.horizontal_resolution or y >= gop.?.mode.info.vertical_resolution or x < 0 or y < 0) {
 		return;
@@ -77,6 +86,8 @@ pub fn draw_pixel(x: u64, y: u64, color: Color) void {
 	fb_base[x + y * gop.?.mode.info.pixels_per_scan_line] = color.to_raw();
 }
 
+/// Get the color of pixel at (`x`, `y`).
+/// If (`x`, `y`) is off the screen, color `black` is returned.
 pub fn get_pixel(x: u64, y: u64) Color {
 	if (x >= gop.?.mode.info.horizontal_resolution or y >= gop.?.mode.info.vertical_resolution or x < 0 or y < 0) {
 		return Color{ .r = 0, .g = 0, .b = 0 };
@@ -89,6 +100,7 @@ const Direction = enum {
 	Up,
 };
 
+/// Move screen up or down depending on `direction` number of pixels, defined by `pixels`.
 pub fn scroll(pixels: u64, direction: Direction) void {
 
 	const current = current_resolution();
@@ -113,6 +125,8 @@ pub fn scroll(pixels: u64, direction: Direction) void {
 	}
 }
 
+/// Draw rectangle at (`x`, `y`) with width and height of (`width`, `height`).
+/// Rectangle has color of `color`.
 pub fn draw_rectangle(x: u64, y: u64, width: u64, height: u64, color: Color) void {
 	var c = [1]uefi.protocol.GraphicsOutput.BltPixel{ color.to_gop() };
 	_ = gop.?.blt(&c, uefi.protocol.GraphicsOutput.BltOperation.BltVideoFill, 0, 0, x, y, width, height, 0);
@@ -121,6 +135,8 @@ pub fn draw_rectangle(x: u64, y: u64, width: u64, height: u64, color: Color) voi
 	// }
 }
 
+/// Clear the screen.
+/// In reality, this just draws a black rectangle across the screen.
 pub fn clear() void {
 	draw_rectangle(0, 0, gop.?.mode.info.horizontal_resolution, gop.?.mode.info.vertical_resolution, Color{ .r = 0, .g = 0, .b = 0 });
 }
@@ -130,6 +146,8 @@ pub const State = struct {
 	buf: []u32,
 	inited: bool,
 
+	/// Initializes a `State` struct.
+	/// Copies current screen data into returned `State`.
 	pub fn init(alloc: heap.Allocator) !State {
 		var buf = try alloc.alloc(u32, gop.?.mode.info.horizontal_resolution * gop.?.mode.info.vertical_resolution);
 		errdefer alloc.free(buf);
@@ -146,13 +164,14 @@ pub const State = struct {
 		};
 	}
 
+	/// Load the screen data contained.
 	pub fn load(self: *const State) void {
-
 		for (0..self.buf.len) |i| {
 			fb_base[i] = self.buf[i];
 		}
 	}
 
+	/// Deallocate screen data.
 	pub fn deinit(self: *State) void {
 		self.alloc.free(self.buf);
 		self.inited = false;
@@ -164,6 +183,7 @@ pub const Framebuffer = struct {
 	framebuffer: []uefi.protocol.GraphicsOutput.BltPixel,
 	alloc: heap.Allocator,
 
+	/// Initializes a framebuffer.
 	pub fn init(allocator: heap.Allocator) !Framebuffer {
 		var self = Framebuffer{
 			.framebuffer = undefined, .alloc = allocator
@@ -177,6 +197,7 @@ pub const Framebuffer = struct {
 		return self;
 	}
 
+	/// Copies screen data from `state` into `self`.
 	pub fn load_state(self: *Framebuffer, state: State) void {
 		for (0..self.framebuffer.len) |i| {
 			const color = Color.from_raw(state.buf[i]);
@@ -184,6 +205,7 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Draws framebuffer to screen, at once.
 	pub fn update(self: *Framebuffer) !void {
 		const res = gop.?.blt(self.framebuffer.ptr, uefi.protocol.GraphicsOutput.BltOperation.BltBufferToVideo, 0, 0, 0, 0, gop.?.mode.info.horizontal_resolution, gop.?.mode.info.vertical_resolution, 0);
 		if (res != uefi.Status.Success) {
@@ -196,11 +218,13 @@ pub const Framebuffer = struct {
 		// }
 	}
 
+	/// Wrapper around `self.clear_color`, with `color` as black.
 	pub fn clear(self: *Framebuffer) void {
 		const black = Color{ .r = 0, .g = 0, .b = 0 };
 		self.clear_color(black);
 	}
 
+	/// Set all pixels to `color`.
 	pub fn clear_color(self: *Framebuffer, color: Color) void {
 		const color_gop = color.to_gop();
 		for (0..self.framebuffer.len) |i| {
@@ -208,10 +232,13 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Draw pixel at (`x`, `y`) with color of `color` to framebuffer.
 	pub fn draw_pixel(self: *Framebuffer, x: u64, y: u64, color: Color) void {
 		self.framebuffer[x + y * gop.?.mode.info.pixels_per_scan_line] = color.to_gop();
 	}
 
+	/// Draw character at (`x`, `y`) with color and background color of `color` and `bg_color` to framebuffer.
+	/// Uses currently loaded font in `efi.fb`.
 	pub fn draw_char(self: *Framebuffer, c: u8, x: u64, y: u64, color: ?Color, bg_color: ?Color) void {
 		for (fb.font[c], 0..) |row, i| {
 			for (row, 0..) |pixel, j| {
@@ -220,6 +247,8 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Draw text at (`x`, `y`) with color and background color of `color` and `bg_color` to framebuffer.
+	/// Uses currently loaded font in `efi.fb`.
 	pub fn draw_text(self: *Framebuffer, text: []const u8, x: u64, y: u64, color: ?Color, bg_color: ?Color) void {
 		var x2 = x;
 		var y2 = y;
@@ -235,6 +264,8 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Draw centered text at (`x`, `y`) with color and background color of `color` and `bg_color` to framebuffer.
+	/// Uses currently loaded font in `efi.fb`.
 	pub fn draw_text_centered(self: *Framebuffer, text: []const u8, x: u64, y: u64, color: ?Color, bg_color: ?Color) void {
 		var each_line = std.mem.splitSequence(u8, text, "\n");
 
@@ -246,18 +277,25 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Draw a formatted string at (`x`, `y`) with color and background color of `color` and `bg_color` to framebuffer.
+	/// Uses currently loaded font in `efi.fb`.
 	pub fn draw_textf(self: *Framebuffer, comptime format: []const u8, args: anytype, x: u64, y: u64, color: ?Color, bg_color: ?Color) !void {
 		const msg = try io.alloc_print(self.alloc, format, args);
 		defer self.alloc.free(msg);
 		self.draw_text(msg, x, y, color orelse Color{ .r = 255, .g = 255, .b = 255 }, bg_color);
 	}
 
+	/// Draw a centered formatted string at (`x`, `y`) with color and background color of `color` and `bg_color` to framebuffer.
+	/// Uses currently loaded font in `efi.fb`.
 	pub fn draw_text_centeredf(self: *Framebuffer, comptime format: []const u8, args: anytype, x: u64, y: u64, color: ?Color, bg_color: ?Color) !void {
 		const msg = try io.alloc_print(self.alloc, format, args);
 		defer self.alloc.free(msg);
 		self.draw_text_centered(msg, x, y, color orelse Color{ .r = 255, .g = 255, .b = 255 }, bg_color);
 	}
 
+
+	/// Draw rectangle at (`x`, `y`) with width and height of (`width`, `height`) to framebuffer.
+	/// Rectangle has color of `color`.
 	pub fn draw_rectangle(self: *Framebuffer, x: u64, y: u64, width: u64, height: u64, color: Color) void {
 		for (x..x+width) |i| {
 			for (y..y+height) |j| {
@@ -266,6 +304,7 @@ pub const Framebuffer = struct {
 		}
 	}
 
+	/// Deallocates data.
 	pub fn deinit(self: *const Framebuffer) void {
 		self.alloc.free(self.framebuffer);
 	}

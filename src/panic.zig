@@ -5,10 +5,13 @@ const graphics = @import("graphics.zig");
 const time = @import("time.zig");
 const bs = @import("boot_services.zig");
 
+/// Wrapper around `panic.kernel_panic_raw`.
 pub fn panic_handler(msg: []const u8, _: ?*@import("std").builtin.StackTrace, _: ?usize) noreturn {
 	kernel_panic_raw(msg);
 }
 
+/// Panic with a formatted string.
+/// Wrapper around `panic.kernel_panic_raw`.
 pub fn kernel_panic(comptime format: []const u8, args: anytype) noreturn {
 	const ArgsType = @TypeOf(args);
 	const args_type_info = @typeInfo(ArgsType);
@@ -30,6 +33,8 @@ pub fn kernel_panic(comptime format: []const u8, args: anytype) noreturn {
 	kernel_panic_raw(msg);
 }
 
+/// Panic handler.
+/// Fallbacks go from: GUI with available debugging options, printing info to framebuffer, to printing info to EFI con_out.
 pub fn kernel_panic_raw(msg: []const u8) noreturn {
 
 	const on_heap = heap.amount;

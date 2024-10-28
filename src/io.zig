@@ -9,6 +9,7 @@ var con_out: *uefi.protocol.SimpleTextOutput = undefined;
 var con_in: *uefi.protocol.SimpleTextInputEx = undefined;
 var inited: bool = false;
 
+/// Initializes the `SimpleTextInputEx` protocol.
 pub fn init_io() !void {
 	con_out = uefi.system_table.con_out.?;
 	if ((try bs.init()).locateProtocol(&uefi.protocol.SimpleTextInputEx.guid, null, @ptrCast(&con_in)) != uefi.Status.Success) {
@@ -17,10 +18,12 @@ pub fn init_io() !void {
 	inited = true;
 }
 
+/// Tests if `init_io()` has been called.
 pub fn has_inited() bool {
 	return inited;
 }
 
+/// Print string to `con_out`.
 pub fn puts(msg: []const u8) void {
 	for (msg) |c| {
 		if (c == '\n') {
@@ -36,6 +39,8 @@ fn printf(buf: []u8, comptime format: []const u8, args: anytype) void {
 	puts(std.fmt.bufPrint(buf, format, args) catch unreachable);
 }
 
+/// Prints a formatted string into an allocated slice.
+/// Caller owns and must free memory.
 pub fn alloc_print(alloc: heap.Allocator, comptime format: []const u8, args: anytype) ![]u8 {
 	const size = std.math.cast(usize, std.fmt.count(format, args)) orelse return error.OutOfMemory;
 	const buf = try alloc.alloc(u8, size);
@@ -43,11 +48,14 @@ pub fn alloc_print(alloc: heap.Allocator, comptime format: []const u8, args: any
 	return buf;
 }
 
+/// Prints a formatted string into an allocated slice, ending with a 0.
+/// Caller owns and must free memory.
 pub fn alloc_printZ(alloc: heap.Allocator, comptime format: []const u8, args: anytype) ![:0]u8 {
 	const buf = try alloc_print(alloc, format, args);
 	return buf[0 .. buf.len - 1 :0];
 }
 
+/// Prints a formatted string to `con_out`.
 pub fn print(comptime format: []const u8, args: anytype) !void {
 	const alloc = heap.Allocator.init();
 	const buf = try alloc_print(alloc, format, args);
@@ -55,6 +63,7 @@ pub fn print(comptime format: []const u8, args: anytype) !void {
 	alloc.free(buf);
 }
 
+/// Prints a formatted string ending with `\n` to `con_out`.
 pub fn println(comptime format: []const u8, args: anytype) !void {
 	try print(format, args);
 	puts("\n");
@@ -63,10 +72,10 @@ pub fn println(comptime format: []const u8, args: anytype) !void {
 pub const UnicodeChar = struct {
 	char: u16,
 
+	/// Convert contained `u16` to a `u8`.
 	pub fn convert(self: *const UnicodeChar) u8 {
 		return @as(u8, @intCast(self.char));
 	}
-
 };
 
 pub const Key = struct {
@@ -76,6 +85,8 @@ pub const Key = struct {
 	shift: bool = false,
 };
 
+/// Get pressed key.
+/// If no key is pressed, `null` is returned.
 pub fn getkey() !?Key {
 	var key: uefi.protocol.SimpleTextInputEx.Key = undefined;
 	const res = con_in.readKeyStrokeEx(&key);
@@ -93,10 +104,12 @@ pub fn getkey() !?Key {
 	};
 }
 
+/// Move cursor position right by `amount`.
 pub fn right(amount: i64) void {
 	_ = con_out.setCursorPosition(@intCast(con_out.mode.cursor_column+amount), @intCast(con_out.mode.cursor_row));
 }
 
+/// Move cursor position down by `amount`.
 pub fn down(amount: i64) void {
 	_ = con_out.setCursorPosition(@intCast(con_out.mode.cursor_column), @intCast(con_out.mode.cursor_row+amount));
 }

@@ -8,6 +8,7 @@ const log = @import("log.zig");
 var rng: ?*uefi.protocol.Rng = null;
 var inited = false;
 
+/// Tests if `rng.init()` has been called.
 pub fn has_inited() bool {
 	return inited;
 }
@@ -18,6 +19,7 @@ pub const RNGMethod = enum {
 	NonRandom,
 };
 
+/// Returns what mode the randomizer uses.
 pub fn get_mode() RNGMethod {
 
 	if (rng == null) {
@@ -31,6 +33,7 @@ pub fn get_mode() RNGMethod {
 
 }
 
+/// Initializes the `Rng` protocol.
 pub fn init() !void {
 
 	log.new_task("HardwareRNG");
@@ -58,6 +61,8 @@ pub fn init() !void {
 
 }
 
+/// Returns a random number from `low` to `high`.
+/// Fallbacks go from: `Hardware`, `Software`, to `NonRandom`.
 pub fn random(low: u64, high: u64) !u64 {
 
 	if (low == high) {

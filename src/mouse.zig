@@ -9,6 +9,7 @@ var spp: ?*uefi.protocol.SimplePointer = null;
 
 var pos: [2]i32 = .{ 0, 0 };
 
+/// Initializes the `SimplePointer` protocol.
 pub fn init() !void {
 
 	log.new_task("SimplePointerProtocol");
@@ -21,6 +22,7 @@ pub fn init() !void {
 
 }
 
+/// Gets the cursor position
 pub fn get_position() ![2]i32 {
 
 	var state: uefi.protocol.SimplePointer.State = undefined;

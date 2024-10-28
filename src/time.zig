@@ -2,6 +2,7 @@ const std = @import("std");
 
 const bs = @import("boot_services.zig");
 
+/// Suspend execution for `ms` milliseconds
 pub fn sleepms(ms: u64) !void {
 	const boot_services = try bs.init();
 	const res = boot_services.stall(ms * 1000);
@@ -18,8 +19,11 @@ pub const Time = struct {
 	hour: u8,
 	minute: u8,
 	second: u8,
-	timezone: i16,
+	timezone: ?i16,
+	is_daylight: bool,
 
+	/// Get amount of days in `year` (adapts to leap years).
+	/// `max_month` can be used to limit the calculation.
 	fn days_in_year(year: u16, max_month: u32) u64 {
 		const leap_year: std.time.epoch.YearLeapKind = if (std.time.epoch.isLeapYear(year)) .leap else .not_leap;
 		var days: u64 = 0;
@@ -30,6 +34,7 @@ pub const Time = struct {
 		return days;
 	}
 
+	/// Returns unix time calculated from `self`.
 	pub fn unix(self: *const Time) u64 {
 		var year: u16 = 0;
 		var days: u64 = 0;
@@ -45,7 +50,8 @@ pub const Time = struct {
 		return seconds;
 	}
 
-	pub fn timezone_now() !Time {
+	/// Gets the current time.
+	pub fn now() !Time {
 		var t: std.os.uefi.Time = undefined;
 
 		if (std.os.uefi.system_table.runtime_services.getTime(&t, null) != .Success) {
@@ -60,11 +66,14 @@ pub const Time = struct {
 			.hour = t.hour,
 			.minute = t.minute,
 			.second = t.second,
-			.timezone = @divFloor(t.timezone, 60),
+			.timezone = if (t.timezone == 2047) null else @divFloor(t.timezone, 60),
+			.is_daylight = t.daylight.in_daylight
 		};
 	}
 
-	pub fn now() !Time {
+	/// Gets the current time, while attempting to account for timezones.
+	/// Only works if the hardware supports timezones.
+	pub fn timezone_now() !Time {
 		var t: std.os.uefi.Time = undefined;
 
 		if (std.os.uefi.system_table.runtime_services.getTime(&t, null) != .Success) {
@@ -72,12 +81,13 @@ pub const Time = struct {
 		}
 
 		var hour: i16 = @intCast(t.hour);
-
-		hour += @divFloor(t.timezone, 60);
-		if (hour < 0) {
-			hour += 24;
-		} else if (hour >= 24) {
-			hour -= 24;
+		if (t.timezone != 2047) {
+			hour += @divFloor(t.timezone, 60);
+			if (hour < 0) {
+				hour += 24;
+			} else if (hour >= 24) {
+				hour -= 24;
+			}
 		}
 
 		return Time{
@@ -88,7 +98,8 @@ pub const Time = struct {
 			.hour = @intCast(hour),
 			.minute = t.minute,
 			.second = t.second,
-			.timezone = @divFloor(t.timezone, 60),
+			.timezone = if (t.timezone == 2047) null else @divFloor(t.timezone, 60),
+			.is_daylight = t.daylight.in_daylight
 		};
 	}
 
