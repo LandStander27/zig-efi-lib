@@ -3,6 +3,8 @@ example =
 prog = "mkisofs"
 dockerflags =
 
+.PHONY: docs all setup docker build run clean example
+
 all:
 	make setup
 	make build
