@@ -36,6 +36,11 @@ make docker
 * Hardware RNG
 	* Fallbacks to software RNG if hardware RNG fails
 
+## API Reference
+
+Automatically generated API Reference for the project can be found at https://landstander27.github.io/zig-efi-lib.
+Note that Zig autodoc is in beta; the website may be broken or incomplete.
+
 ## Examples (Ordered by least-most difficult)
 * [Hello World](examples/hello): Quick "Hello World" example.
 * [Heap](examples/heap): Simple heap example.
