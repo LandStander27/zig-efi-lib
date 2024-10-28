@@ -16,6 +16,7 @@ pub fn ArrayList(comptime T: type) type {
 		allocator: heap.Allocator,
 		attached: bool = true,
 
+		/// Allocates a managed slice.
 		pub fn init(alloc: heap.Allocator) !Self {
 			var data = try alloc.alloc(T, 16);
 			return Self {
@@ -27,6 +28,7 @@ pub fn ArrayList(comptime T: type) type {
 			};
 		}
 
+		/// Returns a copy of the contained slice and calls `self.deinit()`.
 		pub fn detach(self: *Self) ![]T {
 			const d: []T = try self.allocator.alloc(T, self.len);
 			std.mem.copyForwards(T, d, self.items);
@@ -34,11 +36,13 @@ pub fn ArrayList(comptime T: type) type {
 			return d;
 		}
 
+		/// Deallocates contained data.
 		pub fn deinit(self: *Self) void {
 			self.attached = false;
 			self.allocator.free(self.data);
 		}
 
+		/// Remove element at `index`.
 		pub fn remove(self: *Self, index: usize) void {
 			for (index..self.len-1) |i| {
 				self.data[i] = self.data[i+1];
@@ -54,6 +58,7 @@ pub fn ArrayList(comptime T: type) type {
 			}
 		}
 
+		/// Insert `T` at `index`, growing the slice when needed.
 		pub fn insert(self: *Self, index: usize, item: T) !void {
 			try self.grow();
 
@@ -67,6 +72,7 @@ pub fn ArrayList(comptime T: type) type {
 
 		}
 
+		/// Return pointer to last element, if any.
 		pub fn last(self: *Self) ?*T {
 			if (self.len == 0) {
 				return null;
@@ -74,6 +80,7 @@ pub fn ArrayList(comptime T: type) type {
 			return &self.data[self.len - 1];
 		}
 
+		/// Insert `T` at `self.len`, growing the slice when needed.
 		pub fn append(self: *Self, item: T) !void {
 			try self.grow();
 			self.data[self.len] = item;
@@ -81,17 +88,20 @@ pub fn ArrayList(comptime T: type) type {
 			self.len += 1;
 		}
 
+		/// Insert elements contained in `item` at `self.len`, growing the slice when needed.
 		pub fn append_slice(self: *Self, item: []const T) !void {
 			for (item) |i| {
 				try self.append(i);
 			}
 		}
 
+		/// Clear the contained slice.
 		pub fn clear(self: *Self) void {
 			self.len = 0;
 			self.items = self.data[0..0];
 		}
 
+		/// Clear and reallocate the contained slice.
 		pub fn reset(self: *Self) !void {
 			self.data = try self.allocator.realloc(T, self.data, 16);
 			self.capacity = 16;

@@ -34,19 +34,6 @@ const vga_font = @embedFile("./assets/vga16.psf");
 pub var font: [512][][]bool = undefined;
 pub var font_loaded = false;
 
-// const cursor = blk: {
-
-// 	var ret: [16][8]bool = undefined;
-// 	for (&ret, 0..) |*row, i| {
-// 		for (row, 0..) |*pixel, j| {
-// 			pixel.* = if (i >= 1 and i < ret.len-1 and j == 2) true else false;
-// 		}
-// 	}
-
-// 	break :blk ret;
-
-// };
-
 const font_padding: u64 = 0;
 
 pub const White = Color{ .r = 255, .g = 255, .b = 255 };
@@ -61,6 +48,9 @@ var current_color = White;
 
 var cursor_pos = [_]u64{0, 0};
 
+/// Allocate data to load the embedded font.
+/// This or `load_font` must be called before any text rendering to screen.
+/// If `free_font` is not called either at exit or before loading another font, memory leaks will occur.
 pub fn load_builtin_font(alloc: heap.Allocator) !void {
 
 	const data = vga_font[4..];
@@ -87,6 +77,10 @@ pub fn load_builtin_font(alloc: heap.Allocator) !void {
 
 }
 
+/// Allocate data to load the psf font at `/fonts/font_name.psf`.
+/// `font_name` should not include the file extension.
+/// This or `load_builtin_font` must be called before any text rendering to screen.
+/// If `free_font` is not called either at exit or before loading another font, memory leaks will occur.
 pub fn load_font(alloc: heap.Allocator, width: u64, height: u64, font_name: []const u8) !void {
 
 	const path = try alloc_print(alloc, "/fonts/{s}.psf", .{font_name});
@@ -122,6 +116,7 @@ pub fn load_font(alloc: heap.Allocator, width: u64, height: u64, font_name: []co
 
 }
 
+/// Deallocates data for currently loaded font.
 pub fn free_font(alloc: heap.Allocator) void {
 	font_loaded = false;
 	for (&font) |*char| {
@@ -132,6 +127,7 @@ pub fn free_font(alloc: heap.Allocator) void {
 	}
 }
 
+/// Get the current cursor position.
 pub fn get_cursor_pos() struct { x: u64, y: u64 } {
 	return .{
 		.x = cursor_pos[0],
@@ -139,11 +135,13 @@ pub fn get_cursor_pos() struct { x: u64, y: u64 } {
 	};
 }
 
+/// Set the current cursor position.
 pub fn set_cursor_pos(x: u64, y: u64) void {
 	cursor_pos[0] = x;
 	cursor_pos[1] = y;
 }
 
+/// Move the cursor down by `amount` rows.
 pub fn down(amount: i64) void {
 	var a: i64 = @intCast(cursor_pos[1]);
 	a += amount;
@@ -159,6 +157,7 @@ pub fn down(amount: i64) void {
 
 }
 
+/// Move the cursor right by `amount` columns.
 pub fn right(amount: i64) void {
 	var a: i64 = @intCast(cursor_pos[0]);
 	a += amount;
@@ -205,6 +204,7 @@ fn put_cursor() void {
 	// }
 }
 
+/// Set the text color to `color`.
 pub fn set_color(color: Color) void {
 	current_color = color;
 }
@@ -255,6 +255,8 @@ fn putchar(c: u8) void {
 // 	put_cursor();
 // }
 
+/// Print `str` to framebuffer.
+/// Confirmed valid characters: `\n`, `\r`, `\t`, 8 (backspace), and most normal characters.
 pub fn puts(str: []const u8) void {
 
 	// const max_column: u64 = graphics.current_resolution().width / (font_width+font_padding) - 2;
@@ -310,6 +312,7 @@ pub fn puts(str: []const u8) void {
 	put_cursor();
 }
 
+/// Clear the screen.
 pub fn clear() void {
 	cursor_pos[0] = 0;
 	cursor_pos[1] = 0;
@@ -318,6 +321,8 @@ pub fn clear() void {
 	graphics.draw_rectangle(0, 0, current.width, current.height, Black);
 }
 
+/// Prints a formatted string into an allocated slice.
+/// Caller owns and must free memory.
 pub fn alloc_print(alloc: heap.Allocator, comptime format: []const u8, args: anytype) ![]u8 {
 	const size = std.math.cast(usize, std.fmt.count(format, args)) orelse return error.OutOfMemory;
 	const buf = try alloc.alloc(u8, size);
@@ -325,6 +330,7 @@ pub fn alloc_print(alloc: heap.Allocator, comptime format: []const u8, args: any
 	return buf;
 }
 
+/// Prints a formatted string to framebuffer.
 pub fn print(comptime format: []const u8, args: anytype) !void {
     const ArgsType = @TypeOf(args);
     const args_type_info = @typeInfo(ArgsType);
@@ -341,6 +347,7 @@ pub fn print(comptime format: []const u8, args: anytype) !void {
 	alloc.free(buf);
 }
 
+/// Prints a formatted string ending with `\n` to `con_out`.
 pub fn println(comptime format: []const u8, args: anytype) !void {
 	try print(format, args);
 	puts("\n");

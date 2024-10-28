@@ -20,6 +20,7 @@ const ArrayList = @import("array.zig").ArrayList;
 
 var current_path: ArrayList(u8) = undefined;
 
+/// Initializes the protocols required for the filesystem.
 pub fn init(allocator: heap.Allocator) !void {
 	alloc = allocator;
 	const boot_services = try bs.init();
@@ -47,10 +48,12 @@ pub fn init(allocator: heap.Allocator) !void {
 
 }
 
+/// Return the current working directory.
 pub fn cwd() []const u8 {
 	return current_path.items;
 }
 
+/// Set the current working directory.
 pub fn set_cwd(path: []const u8) !void {
 	if (std.mem.eql(u8, path, ".")) {
 		return;
@@ -106,6 +109,7 @@ pub const Info = struct {
 	filename: []const u8,
 	filetype: FileType,
 
+	/// Free contained allocated data.
 	pub fn free(self: *const Info) void {
 		alloc.free(self.filename);
 	}
@@ -134,18 +138,22 @@ pub const File = struct {
 
 	file: *uefi.protocol.File,
 
+	/// Close the file.
 	pub fn close(self: *const Self) !void {
 		if (self.file.close() != uefi.Status.Success) {
 			return error.CouldNotCloseFile;
 		}
 	}
 
+	/// Sets the cursor position for reading.
 	pub fn set_position(self: *const Self, pos: usize) !void {
 		if (self.file.setPosition(pos) != uefi.Status.Success) {
 			return error.CouldNotSetPosition;
 		}
 	}
 
+	/// Get info about the file.
+	/// Info must be deallocated after use: `Info.free()`.
 	pub fn get_info(self: *const Self) !Info {
 		var size: usize = 64;
 
@@ -178,8 +186,9 @@ pub const File = struct {
 
 	}
 
+	/// Read at most `buf.len` bytes into `buf`.
+	/// Returns amount of bytes read.
 	pub fn read(self: *const Self, buf: *[]u8) !usize {
-
 		var buf_size = buf.len;
 
 		const res = self.file.read(&buf_size, buf.ptr);
@@ -189,11 +198,11 @@ pub const File = struct {
 		}
 
 		return buf_size;
-
 	}
 
+	/// Read all of file into returned slice.
+	/// Returned data must be deallocated after use.
 	pub fn read_all_alloc(self: *const Self) ![]u8 {
-
 		const info = try self.get_info();
 		defer info.free();
 
@@ -203,7 +212,6 @@ pub const File = struct {
 		_ = try self.read(&buf);
 
 		return buf;
-
 	}
 
 };
@@ -213,6 +221,8 @@ pub const Dir = struct {
 
 	file: *uefi.protocol.File,
 
+	/// Get info about the file.
+	/// Info must be deallocated after use: `Info.free()`.
 	pub fn get_info(self: *const Self) !Info {
 		var size: usize = 64;
 
@@ -245,22 +255,24 @@ pub const Dir = struct {
 
 	}
 
+	/// Close the directory.
 	pub fn close(self: *const Self) !void {
 		if (self.file.close() != uefi.Status.Success) {
 			return error.CouldNotCloseDir;
 		}
 	}
 
+	/// Restart the directory iterator.
 	pub fn restart(self: *const Self) !void {
-
 		const res = self.file.setPosition(0);
 		if (res != uefi.Status.Success) {
 			try res.err();
 			return error.CouldNotRestartDir;
 		}
-
 	}
 
+	/// Return info of the next file contained in the directory.
+	/// Info must be deallocated after use: `Info.free()`.
 	pub fn next(self: *const Self) !?Info {
 		var size: usize = 64;
 
@@ -359,6 +371,10 @@ fn convert(str: []const u8) !struct { buf : []u16, len : usize } {
 	};
 }
 
+/// Open file at `str` path with mode of `mode`.
+/// File must be closed after use: `File.close()`.
+/// `str` can be a relative or absolute path.
+/// Filesystem uses `/` like normal linux systems.
 pub fn open_file(str: []const u8, mode: FileMode) !File {
 
 	const tmp = try convert(str);
@@ -379,6 +395,10 @@ pub fn open_file(str: []const u8, mode: FileMode) !File {
 	};
 }
 
+/// Open directory at `str` path.
+/// Directory must be closed after use: `Dir.close()`.
+/// `str` can be a relative or absolute path.
+/// Filesystem uses `/` like normal linux systems.
 pub fn open_dir(str: []const u8) !Dir {
 
 	const tmp = try convert(str);
@@ -399,6 +419,7 @@ pub fn open_dir(str: []const u8) !Dir {
 	};
 }
 
+/// Deinitialize the filesystem.
 pub fn deinit() void {
 	if (current_path.attached) {
 		log.new_task("DeinitFS");
@@ -407,6 +428,7 @@ pub fn deinit() void {
 	}
 }
 
+/// Mount the EFI root at `/`.
 pub fn mount_root() !void {
 	log.new_task("MountRootFS");
 	errdefer log.error_task();
@@ -422,6 +444,7 @@ pub fn mount_root() !void {
 
 }
 
+/// Unmount the EFI root.
 pub fn umount_root() !void {
 	log.new_task("UmountRootFS");
 	errdefer log.error_task();
