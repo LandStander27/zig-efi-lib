@@ -37,6 +37,7 @@ pub fn build(b: *std.Build) !void {
 		.{ .name = "graphics", .src = "examples/graphics/main.zig" },
 		.{ .name = "advanced", .src = "examples/advanced/main.zig" },
 		.{ .name = "panic", .src = "examples/panic/main.zig" },
+		.{ .name = "snake", .src = "examples/snake/main.zig" },
 	}) |excfg| {
 		const ex_name = excfg.name;
 		const ex_src = excfg.src;

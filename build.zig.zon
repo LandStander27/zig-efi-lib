@@ -7,8 +7,7 @@
         "build.zig.zon",
         "src",
         "examples",
-        // For example...
-        //"LICENSE",
-        //"README.md",
+        "LICENSE",
+        "README.md",
     },
 }

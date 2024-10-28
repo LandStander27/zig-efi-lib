@@ -42,6 +42,7 @@ make docker
 * [Panic](examples/panic): Showcases how to use the optional panic handler.
 * [Graphics](examples/graphics): Text and 2D graphics.
 * [Advanced](examples/advanced): Skeleton for an "advanced" project.
+* [Snake](examples/snake): A snake game. Showcases how to draw to screen with a framebuffer.
 * **[AeroOS](https://github.com/LandStander27/AeroOS)**: Simple OS I created that originally gave me the idea for this project. Most of the code of this library is taken from here.
 
 ## FAQ
