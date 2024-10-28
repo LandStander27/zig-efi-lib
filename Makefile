@@ -42,3 +42,8 @@ example:
 	docker build -t osbuilder .
 	docker run -h osbuilder --name osbuilder $(dockerflags) --rm -v .:/mnt osbuilder make all example="$(example)"
 	docker image rm osbuilder
+
+docs:
+	docker build -t osbuilder .
+	docker run -h osbuilder --name osbuilder $(dockerflags) --rm -v .:/mnt osbuilder zig build docs
+	docker image rm osbuilder

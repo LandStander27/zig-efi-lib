@@ -1,0 +1,39 @@
+name: API Reference
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+    - 'README.md'
+    - '.gitignore'
+    - 'LICENSE'
+
+jobs:
+  build:
+    name: Build website
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install deps
+      run: sudo apt install make docker
+
+    - name: Build docs
+      run: make docs
+    - name: Upload
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: "zig-out/docs/"
+
+  publish:
+    name: Publish website
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v3
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
