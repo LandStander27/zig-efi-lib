@@ -13,11 +13,10 @@ jobs:
     name: Build website
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
+    
     - name: Install deps
       run: sudo apt install make docker
-
-    - name: test
-      run: cat Makefile
 
     - name: Build docs
       run: make docs
