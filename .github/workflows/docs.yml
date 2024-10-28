@@ -16,6 +16,9 @@ jobs:
     - name: Install deps
       run: sudo apt install make docker
 
+    - name: test
+      run: cat Makefile
+
     - name: Build docs
       run: make docs
     - name: Upload
