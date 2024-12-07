@@ -6,7 +6,7 @@ A simple library for creating EFI applications/operating systems in Zig.
 NOTE: Only Zig version 0.13.0 is supported.
 1. In your project containing your `build.zig` file:
 ```sh
-zig fetch --save git+https://github.com/LandStander27/zig-efi-lib
+zig fetch --save git+https://git.kage.sj.strangled.net/Land/zig-efi-lib
 ```
 2. Copy these files into your project:
 - [Dockerfile](Dockerfile)
@@ -48,8 +48,8 @@ Note that Zig autodoc is in beta; the website may be broken or incomplete.
 * [Graphics](examples/graphics): Text and 2D graphics.
 * [Advanced](examples/advanced): Skeleton for an "advanced" project.
 * [Snake](examples/snake): A snake game. Showcases how to draw to screen with a framebuffer.
-* **[AeroOS](https://github.com/LandStander27/AeroOS)**: Simple OS I created that originally gave me the idea for this project. Most of the code of this library is taken from here.
+* **[AeroOS](https://git.kage.sj.strangled.net/Land/AeroOS)**: Simple OS I created that originally gave me the idea for this project. Most of the code of this library is taken from here.
 
 ## FAQ
-* When building with docker, why are the error messages not pretty?:
+* When building with docker, why are the error messages not "pretty"?:
 	* Instead of running `make docker`, run `make docker dockerflags="-it"`.
