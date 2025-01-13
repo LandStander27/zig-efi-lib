@@ -3,7 +3,7 @@
 A simple library for creating EFI applications/operating systems in Zig.
 
 ## Installation
-NOTE: Only Zig version 0.13.0 is supported.
+NOTE: Only Zig version `0.14.0-dev.2577+271452d22` is supported as of the latest commit. (Although you will not need zig to compile, as it uses docker by default).
 1. In your project containing your `build.zig` file:
 ```sh
 zig fetch --save git+https://codeberg.org/Land/zig-efi-lib
@@ -18,7 +18,7 @@ zig fetch --save git+https://codeberg.org/Land/zig-efi-lib
 1. Install Docker
 2. Run:
 ```sh
-make docker
+make docker name="name of OS"
 ```
 
 ## Highlighted features
@@ -42,6 +42,7 @@ Automatically generated API Reference for the project can be found at https://la
 Note that Zig autodoc is in beta; the website may be broken or incomplete.
 
 ## Examples (Ordered by least-most difficult)
+To run these examples, excluding the last one, run `make example example="dir" run`, with `dir` being a directory in [examples](examples).
 * [Hello World](examples/hello): Quick "Hello World" example.
 * [Heap](examples/heap): Simple heap example.
 * [Panic](examples/panic): Showcases how to use the optional panic handler.

@@ -15,7 +15,7 @@ pub fn panic_handler(msg: []const u8, _: ?*@import("std").builtin.StackTrace, _:
 pub fn kernel_panic(comptime format: []const u8, args: anytype) noreturn {
 	const ArgsType = @TypeOf(args);
 	const args_type_info = @typeInfo(ArgsType);
-	const fields_info = args_type_info.Struct.fields;
+	const fields_info = args_type_info.@"struct".fields;
 	const alloc = heap.Allocator.init();
 	const msg = blk: {
 		if (fields_info.len == 0) {

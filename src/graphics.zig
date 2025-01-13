@@ -130,9 +130,6 @@ pub fn scroll(pixels: u64, direction: Direction) void {
 pub fn draw_rectangle(x: u64, y: u64, width: u64, height: u64, color: Color) void {
 	var c = [1]uefi.protocol.GraphicsOutput.BltPixel{ color.to_gop() };
 	_ = gop.?.blt(&c, uefi.protocol.GraphicsOutput.BltOperation.BltVideoFill, 0, 0, x, y, width, height, 0);
-	// if (res != uefi.Status.Success) {
-	// 	return res.err();
-	// }
 }
 
 /// Clear the screen.
@@ -211,11 +208,6 @@ pub const Framebuffer = struct {
 		if (res != uefi.Status.Success) {
 			try res.err();
 		}
-		// const black = Color{ .r = 0, .g = 0, .b = 0 };
-		// const black_gop = black.to_gop();
-		// for (0..self.framebuffer.len) |i| {
-		// 	self.framebuffer[i] = black_gop;
-		// }
 	}
 
 	/// Wrapper around `self.clear_color`, with `color` as black.

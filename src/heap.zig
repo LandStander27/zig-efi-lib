@@ -34,18 +34,6 @@ pub const Allocator = struct {
 		return memory[0..count];
 	}
 
-	// pub fn alloc_addr(self: *const Allocator, comptime T: type, addr: usize, count: usize) !void {
-	// 	try self.alloc_addr_type(T, addr, count, uefi.tables.MemoryType.BootServicesData);
-	// }
-
-	// pub fn alloc_addr_type(_: *const Allocator, comptime T: type, addr: usize, count: usize, memory_type: uefi.tables.MemoryType) !void {
-	// 	const res = (try bs.init()).allocatePool(memory_type, count * @sizeOf(T), @ptrCast(@constCast(&addr)));
-	// 	if (res != uefi.Status.Success) {
-	// 		try res.err();
-	// 	}
-	// 	amount += 1;
-	// }
-
 	/// Reallocates a buffer `new_count` of `T`, containing original elements of `old_memory`.
 	pub fn realloc(self: *const Allocator, comptime T: type, old_memory: []T, new_count: usize) ![]T {
 		const new_memory: []T = try self.alloc(T, new_count);
@@ -98,13 +86,6 @@ pub const Allocator = struct {
 
 	}
 
-	// pub fn create_addr(self: *const Allocator, comptime T: type, addr: usize) !void {
-	// 	// const data: []u8 = try self.alloc(u8, @sizeOf(T));
-	// 	// const ptr: *T = @ptrCast(data.ptr);
-	// 	// return ptr.*;
-	// 	try self.alloc_addr(T, addr, 1);
-	// }
-
 	/// Deallocate `ptr`.
 	/// `ptr` must have been allocated from `self.create`.
 	pub fn destroy(self: *const Allocator, ptr: anytype) void {
@@ -112,9 +93,4 @@ pub const Allocator = struct {
 		self.free(data[0..@sizeOf(@TypeOf(ptr.*))]);
 	}
 
-	// pub fn deinit(self: *const Allocator) void {
-	// 	if (self.amount > 0) {
-	// 		@panic("Memory leak");
-	// 	}
-	// }
 };

@@ -3,6 +3,6 @@ FROM archlinux:latest
 RUN pacman --noconfirm -Sy make git mtools xorriso dosfstools cdrtools wget
 RUN wget https://kage.sj.strangled.net/zigup-bin.pkg.tar.zst
 RUN pacman --noconfirm -U zigup-bin.pkg.tar.zst
-RUN zigup 0.13.0
+RUN zigup 0.14.0-dev.2577+271452d22
 WORKDIR /mnt
 # CMD [ "make", "all" ]
